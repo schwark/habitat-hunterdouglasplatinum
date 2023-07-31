@@ -54,11 +54,11 @@ def off() {
 }
 
 def open() {
-	on()
+	off()
 }
 
 def close() {
-	off()
+	on()
 }
 
 def setPosition(percent) {

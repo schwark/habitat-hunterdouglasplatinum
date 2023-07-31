@@ -70,7 +70,7 @@ def initialize() {
 		telnetClose() 
 		debug("connecting to ${settings.ip}:${settings.port}...")
 		telnetConnect([termChars:[13]], ip, port as Integer, null, null)
-		schedule('*/10 * * ? * *', execQueue)
+		schedule('*/5 * * ? * *', execQueue)
 	} else {
 		logError("ip or port missing", "initialize()")
 	}
@@ -82,7 +82,7 @@ def execCommand(command, params=null, callback=null) {
 }
 
 def execQueue() {
-	if(state.processing && state.skippedTurns < 10) {
+	if(state.processing && state.skippedTurns < 20) {
 		state.skippedTurns = (state.skippedTurns ? state.skippedTurns : 0) + 1
 		debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
 		return
@@ -90,7 +90,7 @@ def execQueue() {
 	state.skippedTurns = 0
 	def command = null
 	if(state.queue) {
-		command = state.queue.pop()
+		command = state.queue.remove(0)
 	} else {
 		command = ["cmd": "ping"]
 	}
@@ -100,7 +100,7 @@ def execQueue() {
 private sendCommand(command, params=null, callback=null) {
 	def commands = [
 		"data": ["cmd": "\$dat", "sentinel":"\$upd01-"],
-		"move": ["cmd": "\$pss%02d-%02d-%03d", "sentinel":"done"],
+		"move": ["cmd": "\$pss%02d-%02d-%03d", "sentinel":"\$done"],
 		"release": ["cmd": "\$rls", "sentinel":"\$act00-00-"],
 		"exec": ["cmd": "\$inm%02d-", "sentinel":"\$act00-00-"],
 		"ping": ["cmd": "\$dmy", "sentinel":"\$ack"]
