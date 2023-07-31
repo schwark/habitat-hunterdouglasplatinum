@@ -2,7 +2,7 @@
 
 This is an integration for Hubitat hubs to control shades that use the Hunter Douglas Platinum Gateway hub. This is NOT for PowerView shades.
 
-To use, go to your Hubitat hub, Go to Developer tools / Drivers Code and paste and save each of these files separately
+To use, go to your Hubitat hub, Go to Developer tools / Drivers Code / Add New Driver and paste and save each of these files separately
 
 1. https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-bridge.groovy
 2. https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-scene-switch.groovy
