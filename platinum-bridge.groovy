@@ -112,14 +112,14 @@ private sendCommand(command, params=null, callback=null) {
 
 def closeCommand() {
 	def cmd = state.processing['cmd']
-	debug("closing command ${cmd} with callback ${state.processing['callback']}", "closeCommand()")
+	if('ping' != cmd) debug("closing command ${cmd} with callback ${state.processing['callback']}", "closeCommand()")
 	if(state.processing && state.processing['callback']) "${state.processing['callback']}"()
 	state.processing = null
 	if('move' == cmd) sendCommand('release')
 }
 
 def sendMessage(msg) {
-	debug("sending command ${msg} on telnet...", "sendMessage()")
+	if('$dmy' != msg) debug("sending command ${msg} on telnet...", "sendMessage()")
 	sendHubCommand(new hubitat.device.HubAction(msg, hubitat.device.Protocol.TELNET))
 }
 
