@@ -1,33 +1,20 @@
 # Hunter Douglas Platinum Gateway Integration with Hubitat Hub
 
-Note: Only been tested on Hub v2 - don't know if works the same on Hub v1
+This is an integration for Hubitat hubs to control shades that use the Hunter Douglas Platinum Gateway hub. This is NOT for PowerView shades.
 
-Since I could not figure if and how the Platinum gateway responds to SSDP requests, I have created a preference for the gateway IP that you need to manually enter. The Platinum Gateway app shows you the IP that it is connected to that you need to find and manually enter.
+To use, go to your Hubitat hub, Go to Developer tools / Drivers Code and paste and save each of these files separately
 
-Since I could not get SmartThings hub to return the result of a TCP query on a local network, you have to telnet or netcat or run the python script included, to your gateway to get one file and put it up on a web accessible page and enter that URL in as a Status URL. You can use pastebin as a location or your dropbox. But if you use pastebin, please make sure to use the "raw" page link.
+1. https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-bridge.groovy
+2. https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-scene-switch.groovy
+3. https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-shade-switch.groovy
 
-netcat:
+Then go to Devices / Add Device / Add Virtual Device. Name the device anything you want - like Hunter Douglas Gateway, or HDP Gateway, and pick "Hunter Douglas Platinum Gateway" from Type dropdown. Save the device.
 
-	nc -i3 <ip-address-of-gateway> 522 < input.txt > output.txt
+Go to Devices / HDP Gateway. Scroll down and enter the Gateway IP address. If you want a switch created for EACH Shade, turn on the preference here - usually unnecessary for most people. Save Preferences
 
-telnet on Windows:
-
-	telnet -f output.txt <ip-address-of-gateway> 522 < input.txt
-
-python:
-	
-	python getstatus.py <ip-address-of-gateway> > output.txt
+This should create a switch under HDP Gateway for each scene defined in your Hunter Douglas Platinum phone app. It can take upto a minute or two for these to be created.
 
 
-* Github integration (first need to enable [github integration](http://docs.smartthings.com/en/latest/tools-and-ide/github-integration.html))
-```
-Click on My SmartApps/Settings/Add new repository
-Owner: schwark, Name: smartthings-hunterdouglasplatinum, Branch: master
-Save
-Update from Repo / smartthings-hunterdouglasplatinum (master)
-Check all the ones under New and Obsolete
-Check Publish checkbox at the bottom (next the Cancel button)
-Click Execute update
-```
+
 
 
