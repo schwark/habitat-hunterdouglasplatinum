@@ -41,7 +41,6 @@ preferences {
 
 def updateStatus() {
 	debug("updating status..")
-	return
 	updateScenes()
 	updateShades()
 }
@@ -84,8 +83,8 @@ def execCommand(command, params=null, callback=null) {
 
 def execQueue() {
 	if(state.processing && state.skippedTurns < 10) {
-		debug("still processing ${state.processing['cmd']} - so waiting for next turn...")
 		state.skippedTurns = (state.skippedTurns ? state.skippedTurns : 0) + 1
+		debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
 		return
 	}
 	state.skippedTurns = 0
@@ -132,7 +131,6 @@ def getDB(init) {
 
 private parse(String msg) 
 {
-	debug(msg, "parse()")
 	processLine(msg)
 }
 
@@ -231,9 +229,11 @@ def updateScenes() {
 		def name = sceneMap['name']
 		debug("processing scene ${id} with name ${name}")
 		def sceneDevice = createChildDevice("scene", name, id)
-		debug("created child device scene ${id} with name ${name}")
-		sceneDevice.setSceneNo(id)
-		state.scenes[id] = sceneDevice
+		if(sceneDevice) {
+			debug("created child device scene ${id} with name ${name}")
+			sceneDevice.setSceneNo(id)
+			state.scenes[id] = sceneDevice
+		}
 	}
 }
 
@@ -267,9 +267,11 @@ def updateShades() {
 		def name = shadeMap['name']
 		debug("processing shade ${id} with name ${name}")
 		def shadeDevice = createChildDevice("shade", name, id)
-		debug("created child device shade ${id} with name ${name}")
-		shadeDevice.setShadeNo(id)
-		state.shades[id] = shadeDevice
+		if(shadeDevice) {
+			debug("created child device shade ${id} with name ${name}")
+			shadeDevice.setShadeNo(id)
+			state.shades[id] = shadeDevice
+		}
 	}
 }
 
@@ -290,7 +292,7 @@ private createChildDevice(deviceType, label, id) {
 	def deviceId = makeChildDeviceId(deviceType, id)
 	def createdDevice = getChildDevice(deviceId)
 
-	if(!createdDevice) {
+	if(!createdDevice && ("Master Close" == label || "Master Open" == label || "Master Bedroom 2" == label)) {
 		try {
 			// create the child device
 			addChildDevice("schwark", "Hunter Douglas Platinum ${type}", deviceId, [label : "${label}", isComponent: false, name: "${label}"])
@@ -307,7 +309,7 @@ private createChildDevice(deviceType, label, id) {
 }
 
 def makeChildDeviceId(deviceType, id) {
-	def hubid = getDeviceNetworkId()
+	def hubid = 'HDPGATEWAY'
 	return "${hubid}-${deviceType.toUpperCase()}-${id}"
 }
 

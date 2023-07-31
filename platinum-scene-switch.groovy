@@ -24,6 +24,7 @@
 metadata {
 	definition (name: "Hunter Douglas Platinum Scene", namespace: "schwark", author: "Schwark Satyavolu") {
 	capability "Switch"
+	
 	command "setSceneNo", ["number"]
 	command "runScene"
 	}

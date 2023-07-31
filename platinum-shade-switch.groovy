@@ -24,8 +24,9 @@
 metadata {
 	definition (name: "Hunter Douglas Platinum Shade", namespace: "schwark", author: "Schwark Satyavolu") {
 	capability "Switch"
-	capability "Switch Level"
-	capability "Window Shade"
+	capability "SwitchLevel"
+	capability "WindowShade"
+
 	command "setShadeNo", ["number"]
 	command "open"
 	command "close"
@@ -50,6 +51,18 @@ def on() {
 
 def off() {
 	return setLevel(0)
+}
+
+def open() {
+	on()
+}
+
+def close() {
+	off()
+}
+
+def setPosition(percent) {
+	setLevel(percent)
 }
 
 def setLevel(percent) {
