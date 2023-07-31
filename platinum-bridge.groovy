@@ -78,7 +78,7 @@ def initialize() {
 
 def execCommand(command, params=null, callback=null) {
 	state.queue.push(["cmd": command, "params": params, "callback": callback])
-	if("move" == command) state.queue.push(["cmd": "release"])
+	//if("move" == command) state.queue.push(["cmd": "release"])
 }
 
 def execQueue() {
@@ -111,14 +111,16 @@ private sendCommand(command, params=null, callback=null) {
 }
 
 def closeCommand() {
-	debug("closing command ${state.processing['cmd']} with callback ${state.processing['callback']}", "closeCommand()")
+	def cmd = state.processing['cmd']
+	debug("closing command ${cmd} with callback ${state.processing['callback']}", "closeCommand()")
 	if(state.processing && state.processing['callback']) "${state.processing['callback']}"()
 	state.processing = null
+	if('move' == cmd) sendCommand('release')
 }
 
 def sendMessage(msg) {
 	debug("sending command ${msg} on telnet...", "sendMessage()")
-	sendHubCommand(new hubitat.device.HubAction("${msg}\n", hubitat.device.Protocol.TELNET))
+	sendHubCommand(new hubitat.device.HubAction(msg, hubitat.device.Protocol.TELNET))
 }
 
 def getDB(init) {
@@ -292,7 +294,7 @@ private createChildDevice(deviceType, label, id) {
 	def deviceId = makeChildDeviceId(deviceType, id)
 	def createdDevice = getChildDevice(deviceId)
 
-	if(!createdDevice && ("Master Close" == label || "Master Open" == label || "Master Bedroom 2" == label)) {
+	if(!createdDevice) {
 		try {
 			// create the child device
 			addChildDevice("schwark", "Hunter Douglas Platinum ${type}", deviceId, [label : "${label}", isComponent: false, name: "${label}"])
