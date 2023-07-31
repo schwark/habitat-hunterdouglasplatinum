@@ -1,0 +1,26 @@
+{
+  "author": "Schwark Satyavolu",
+  "drivers": [
+    {
+      "id": "d17a1781-f373-4bf2-843d-c408e739b97d",
+      "name": "Hunter Douglas Platinum Gateway",
+      "namespace": "schwark",
+      "location": "https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-bridge.groovy",
+      "required": true
+    },
+    {
+      "id": "8f8c7009-d90b-43cb-83b5-df5fe11c2f0b",
+      "name": "Hunter Douglas Platinum Scene",
+      "namespace": "schwark",
+      "location": "https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-scene-switch.groovy",
+      "required": true
+    },
+    {
+      "id": "31833fbd-27c3-493c-9bc8-4c2b5203553c",
+      "name": "Hunter Douglas Platinum Shade",
+      "namespace": "schwark",
+      "location": "https://raw.githubusercontent.com/schwark/hubitat-hunterdouglasplatinum/main/platinum-shade-switch.groovy",
+      "required": true
+    }
+  ]
+}
