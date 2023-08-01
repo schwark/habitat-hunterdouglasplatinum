@@ -133,6 +133,7 @@ def getDB(init) {
 
 private parse(String msg) 
 {
+	//debug(msg)
 	processLine(msg)
 }
 
@@ -233,7 +234,6 @@ def updateScenes() {
 		def sceneDevice = createChildDevice("scene", name, id)
 		if(sceneDevice) {
 			debug("created child device scene ${id} with name ${name}")
-			sceneDevice.setSceneNo(id)
 			state.scenes[id] = sceneDevice
 		}
 	}
@@ -271,7 +271,6 @@ def updateShades() {
 		def shadeDevice = createChildDevice("shade", name, id)
 		if(shadeDevice) {
 			debug("created child device shade ${id} with name ${name}")
-			shadeDevice.setShadeNo(id)
 			state.shades[id] = shadeDevice
 		}
 	}
@@ -296,8 +295,9 @@ private createChildDevice(deviceType, label, id) {
 
 	if(!createdDevice) {
 		try {
+			def component = 'shade' == deviceType ? 'Generic Component Dimmer' : 'Generic Component Switch'
 			// create the child device
-			addChildDevice("schwark", "Hunter Douglas Platinum ${type}", deviceId, [label : "${label}", isComponent: false, name: "${label}"])
+			addChildDevice("hubitat", component, deviceId, [label : "${label}", isComponent: false, name: "${label}"])
 			createdDevice = getChildDevice(deviceId)
 			def created = createdDevice ? "created" : "failed creation"
 			debug("Child device type: ${type} id: ${deviceId} label: ${label} ${created}", "createChildDevice()")
@@ -308,6 +308,35 @@ private createChildDevice(deviceType, label, id) {
 		debug("Child device type: ${type} id: ${deviceId} already exists", "createChildDevice()")
 	}
 	return createdDevice
+}
+
+void componentRefresh(cd) {
+    debug("received refresh request from ${cd.displayName}")
+    refresh()
+}
+
+def componentOn(cd) {
+    debug("received on request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
+	def idparts = cd.deviceNetworkId.split("-")
+    def id = idparts[-1] as Integer
+	def type = idparts[-2].toLowerCase()
+	return 'shade' == type ? setShadeLevel(id, 100) : runScene(id)
+}
+
+def componentOff(cd) {
+    debug("received off request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
+	def idparts = cd.deviceNetworkId.split("-")
+    def id = idparts[-1] as Integer
+	def type = idparts[-2].toLowerCase()
+	return 'shade' == type ? setShadeLevel(id, 0) : runScene(id)
+}
+
+def componentShadeLevel(cd, level) {
+    debug("received shade level request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
+	def idparts = cd.deviceNetworkId.split("-")
+    def id = idparts[-1] as Integer
+	def type = idparts[-2].toLowerCase()
+	return setShadeLevel(id, level)
 }
 
 def makeChildDeviceId(deviceType, id) {
