@@ -40,14 +40,8 @@ preferences {
     input name: "debugMode", type: "bool", title: "Debug Mode", defaultValue: true
 }
 
-def updateStatus() {
-	debug("updating status..")
-	updateScenes()
-	updateShades()
-}
-
 def refresh() {
-	execCommand('data', null, updateStatus)
+	execCommand('data')
 }
 
 def installed() {
@@ -56,8 +50,6 @@ def installed() {
 }
 
 def updated() {
-	getDB(true)
-
     debug("Gateway updated", "updated()")
     unschedule()
 	initialize()
@@ -124,14 +116,6 @@ def sendMessage(msg) {
 	sendHubCommand(new hubitat.device.HubAction(msg, hubitat.device.Protocol.TELNET))
 }
 
-def getDB(init) {
-	if(!state.DB || init) {
-		def DB = ['rooms':[:], 'shades':[:], 'scenes':[:]]
-		state.DB = DB
-	}
-	return state.DB
-}
-
 private parse(String msg) 
 {
 	//debug(msg)
@@ -152,7 +136,6 @@ def telnetStatus(String status){
 }
 
 def processLine(line) {
-	def DB = getDB()
 	def prefix = ""
 
     line = line.trim()
@@ -177,13 +160,12 @@ def processLine(line) {
       def room_id = line[3..4]
       def room_name = line.split('-')[-1].trim()
       //debug("found room with ${room_id} and ${room_name}")
-      DB['rooms'][room_id] = ['name':room_name, 'id':room_id, 'search':room_name.toLowerCase()]
     } else if(line.startsWith("\$cm")) {
       // name of scene
       def scene_id = line[3..4]
       def scene_name = line.split('-')[-1].trim()
       //debug("found scene with ${scene_id} and ${scene_name}")
-      DB['scenes'][scene_id] = ['name':scene_name, 'id':scene_id, 'search':scene_name.toLowerCase()]
+	  updateScene(scene_id, scene_name)
     } else if(line.startsWith("\$cs")) {
       // name of a shade
       def parts = line.split('-')
@@ -191,18 +173,33 @@ def processLine(line) {
       def shade_name = parts[-1].trim()
       def room_id = parts[1]
       //debug("found shade with ${shade_id} and ${shade_name}")
-      DB['shades'][shade_id] = ['name':shade_name, 'id':shade_id, 'search':shade_name.toLowerCase(), 'room': room_id]
+	  updateShade(shade_id, shade_name, null)
     } else if(line.startsWith("\$cp")) {
       // state of a shade
       def shade_id = line[3..4]
       def stateTxt = line[-4..-2]
       def state = stateTxt.toInteger()/255.0
+	  updateShade(shade_id, null, state)
       //debug("found shade state with ${shade_id} and ${state}")
-      def shade = DB['shades'][shade_id]
-      if(shade) {
-        DB['shades'][shade_id]['state'] = state
-      }
     }
+}
+
+def updateScene(id, name) {
+	def namePrefix = scenePrefix
+	if(namePrefix) {
+		namePrefix = namePrefix.trim()+" "
+	}
+	debug("processing scene ${id} with name ${name}")
+	createChildDevice("scene", name, id)
+}
+
+def updateShade(id, name, level=null) {
+	def namePrefix = shadePrefix
+	if(namePrefix) {
+		namePrefix = namePrefix.trim()+" "
+	}
+	debug("processing shade ${id} with name ${name}")
+	if(wantShades) createChildDevice("shade", name, id)
 }
 
 def updateScenes() {
@@ -307,6 +304,9 @@ private createChildDevice(deviceType, label, id) {
 		}
 	} else {
 		debug("Child device type: ${type} id: ${deviceId} already exists", "createChildDevice()")
+		if(label && label != createdDevice.getLabel()) {
+			createdDevice.sendEvent(name:'label', value: label, isStateChange: true)
+		}
 	}
 	return createdDevice
 }
