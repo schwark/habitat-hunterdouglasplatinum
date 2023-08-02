@@ -36,6 +36,7 @@ preferences {
     input name: "shadePrefix", type: "text", title: "Prefix for Shade Names", defaultValue: ""
     input name: "scenePrefix", type: "text", title: "Prefix for Scene Names", defaultValue: ""
     input name: "wantShades", type: "bool", title: "Create Switches for each Shade?", defaultValue: false
+    input name: "pruneMissing", type: "bool", title: "Remove Switches for missing Scenes/Shades", defaultValue: false
     input name: "debugMode", type: "bool", title: "Debug Mode", defaultValue: true
 }
 
@@ -218,7 +219,7 @@ def updateScenes() {
 				sceneDevice.sendEvent(name:'label', value: DB['scenes'][id]['name'], isStateChange: true)
 			}
 			DB['scenes'].remove(id)
-		} else {
+		} else if (pruneMissing) {
 			// remove device
 			debug("removing scene ${id} from name ${sceneDevice.displayName}")
 			deleteChildDevice(sceneDevice.deviceNetworkId)
@@ -255,7 +256,7 @@ def updateShades() {
 				shadeDevice.sendEvent(name:'label', value: DB['shades'][id]['name'], isStateChange: true)
 			}
 			DB['shades'].remove(id)
-		} else {
+		} else if (pruneMissing) {
 			// remove device
 			debug("removing shade ${id} from name ${shadeDevice.displayName}")
 			deleteChildDevice(shadeDevice.deviceNetworkId)
