@@ -112,7 +112,7 @@ def closeCommand() {
 }
 
 def sendMessage(msg) {
-	if('$dmy' != msg) log.info("sending command ${msg} to Hunter Douglas Platinum gateway...", "sendMessage()")
+	if('$dmy' != msg) log.info("sending command ${msg} to Hunter Douglas Platinum gateway...")
 	sendHubCommand(new hubitat.device.HubAction(msg, hubitat.device.Protocol.TELNET))
 }
 
@@ -226,7 +226,7 @@ private createChildDevice(deviceType, label, id) {
 			addChildDevice("hubitat", component, deviceId, [label : "${label}", isComponent: false, name: "${label}"])
 			createdDevice = getChildDevice(deviceId)
 			def created = createdDevice ? "created" : "failed creation"
-			log.info("Child device type: ${type} id: ${deviceId} label: ${label} ${created}", "createChildDevice()")
+			log.info("Child device type: ${type} id: ${deviceId} label: ${label} ${created}")
 		} catch (e) {
 			logError("Failed to add child device with error: ${e}", "createChildDevice()")
 		}
