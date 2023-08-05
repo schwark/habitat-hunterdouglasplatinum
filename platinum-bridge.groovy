@@ -233,11 +233,11 @@ private createChildDevice(deviceType, label, id) {
 		}
 	} else {
 		debug("Child device type: ${type} id: ${deviceId} already exists", "createChildDevice()")
-		createdDevice.sendEvent(name: 'switch', value: 'off')
 		if(label && label != createdDevice.getLabel()) {
 			createdDevice.sendEvent(name:'label', value: label, isStateChange: true)
 		}
 	}
+	createdDevice.sendEvent(name: 'switch', value: 'off')
 	return createdDevice
 }
 
