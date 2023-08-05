@@ -179,7 +179,7 @@ def processLine(line) {
       // state of a shade
       def shade_id = line[3..4]
       def stateTxt = line[-4..-2]
-      def state = stateTxt.toInteger()/255.0
+      def state = (stateTxt.toInteger()/255.0)*100 as Integer
 	  updateShade(shade_id, null, state)
       //debug("found shade state with ${shade_id} and ${state}")
     }
@@ -200,7 +200,17 @@ def updateShade(id, name, level=null) {
 		namePrefix = namePrefix.trim()+" "
 	}
 	debug("processing shade ${id} with name ${name}")
-	if(wantShades) createChildDevice("shade", name, id)
+	if(wantShades) {
+		def cd = createChildDevice("shade", name, id)
+		if(level) {
+			cd.sendEvent(name: 'level', value: level)
+			if(0 == level) {
+				cd.sendEvent(name: 'switch', value: 'off')
+			} else {
+				cd.sendEvent(name: 'switch', value: 'on')
+			}
+		}
+	}
 }
 
 def runScene(sceneId) {
@@ -220,7 +230,7 @@ private createChildDevice(deviceType, label, id) {
 	def deviceId = makeChildDeviceId(deviceType, id)
 	def createdDevice = getChildDevice(deviceId)
 
-	if(!createdDevice) {
+	if(!createdDevice && label) {
 		try {
 			def component = 'shade' == deviceType ? 'Generic Component Dimmer' : 'Generic Component Switch'
 			// create the child device
@@ -237,7 +247,7 @@ private createChildDevice(deviceType, label, id) {
 			createdDevice.sendEvent(name:'label', value: label, isStateChange: true)
 		}
 	}
-	createdDevice.sendEvent(name: 'switch', value: 'off')
+	if('shade' == deviceType) createdDevice.sendEvent(name: 'switch', value: 'off')
 	return createdDevice
 }
 
