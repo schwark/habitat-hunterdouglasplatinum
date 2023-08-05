@@ -37,6 +37,7 @@ preferences {
     input name: "scenePrefix", type: "text", title: "Prefix for Scene Names", defaultValue: ""
     input name: "wantShades", type: "bool", title: "Create Switches for each Shade?", defaultValue: false
     input name: "pruneMissing", type: "bool", title: "Remove Switches for missing Scenes/Shades", defaultValue: false
+    input name: "autoOff", type: "bool", title: "Set switches off automatically after 10s", defaultValue: true
     input name: "debugMode", type: "bool", title: "Debug Mode", defaultValue: true
 }
 
@@ -244,20 +245,25 @@ void componentRefresh(cd) {
     refresh()
 }
 
+def turnOff(map) {
+	def cd = getChildDevice(map['device'])
+	cd.sendEvent(name: 'switch', value: 'off')
+}
+
 def componentOn(cd) {
     debug("received on request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
 	def idparts = cd.deviceNetworkId.split("-")
     def id = idparts[-1] as Integer
 	def type = idparts[-2].toLowerCase()
-	return 'shade' == type ? setShadeLevel(id, 100) : runScene(id)
+	'shade' == type ? setShadeLevel(id, 100) : runScene(id)
+	cd.sendEvent(name: 'switch', value: 'on')
+	if(autoOff) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
 }
 
 def componentOff(cd) {
     debug("received off request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
-	def idparts = cd.deviceNetworkId.split("-")
-    def id = idparts[-1] as Integer
-	def type = idparts[-2].toLowerCase()
-	return 'shade' == type ? setShadeLevel(id, 0) : runScene(id)
+	componentOn(cd)
+	cd.sendEvent(name: 'switch', value: 'off')
 }
 
 def componentShadeLevel(cd, level) {
