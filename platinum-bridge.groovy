@@ -250,6 +250,7 @@ def updateRoom(id, name) {
     }
     debug("processing room ${id} with name ${name}")
     if(wantRooms) {
+        name = getRoomBase(name)
         createChildDevice("room", "${name} Shades", id)
     }
 }
@@ -304,6 +305,7 @@ private createChildDevice(deviceType, label, id) {
     } else {
         debug("Child device type: ${type} id: ${deviceId} already exists", "createChildDevice()")
         if(label && label != createdDevice.getLabel()) {
+            createdDevice.setLabel(label)
             createdDevice.sendEvent(name:'label', value: label, isStateChange: true)
         }
     }
@@ -311,10 +313,14 @@ private createChildDevice(deviceType, label, id) {
     return createdDevice
 }
 
+def getRoomBase(roomName) {
+    return roomName.replaceAll(/(?i) (bedroom|room|doors?|shades)/,'')
+}
+
 def getRoomScene(cd, on=true) {
     def suffix = on ? closeSuffix : openSuffix
     def label = state?.nameChanges?."${cd.label}" ?: cd.label
-    def clean = label ? label.replaceAll(/(?i) (bedroom|room|doors?|shades)/,'') : null
+    def clean = label ? getRoomBase(label) : null
     def scene_name = label ? "${clean}${suffix}" : null
     if(scene_name && state.scenes?."${scene_name}") {
         return state.scenes[scene_name]
