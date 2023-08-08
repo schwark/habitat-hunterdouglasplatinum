@@ -260,7 +260,7 @@ def updateShade(id, name, level=null) {
     if(namePrefix) {
         namePrefix = namePrefix.trim()+" "
     }
-    debug("processing shade ${id} with name ${name}")
+    debug("processing shade ${id} with name ${name} and level ${level}")
     if(wantShades) {
         def cd = createChildDevice("shade", name, id)
         if(level) {
@@ -348,7 +348,7 @@ def componentOn(cd) {
         'shade' == type ? setShadeLevel(id, 0) : runScene(id)
         cd.sendEvent(name: 'switch', value: 'on')
         if(autoOff && 'scene' == type) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
-        runIn(20, 'refresh')
+        //runIn(20, 'refresh')
     }
 }
 
@@ -361,7 +361,7 @@ def componentOff(cd) {
     if(id) {
         'shade' == type ? setShadeLevel(id, 100) : runScene(id)
         cd.sendEvent(name: 'switch', value: 'off')
-        runIn(20, 'refresh')
+        //runIn(20, 'refresh')
     }
 }
 
