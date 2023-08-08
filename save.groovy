@@ -15,7 +15,7 @@
  *
  */
 
- def version() {"1.0.0"}
+ def version() {"0.1.1"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -33,21 +33,15 @@ metadata {
 preferences {
     input name: "ip", type: "text", title: "Gateway IP", required: true
     input name: "port", type: "number", title: "Gateway Port", defaultValue: 522
-    input name: "roomPrefix", type: "text", title: "Prefix for Room Names", defaultValue: ""
     input name: "shadePrefix", type: "text", title: "Prefix for Shade Names", defaultValue: ""
     input name: "scenePrefix", type: "text", title: "Prefix for Scene Names", defaultValue: ""
     input name: "wantShades", type: "bool", title: "Create Switches for each Shade?", defaultValue: false
-    input name: "wantRooms", type: "bool", title: "Create Switches for each Room?", defaultValue: true
-    input name: "openSuffix", type: "text", title: "Suffix on Room names for scene name to open shades in room", defaultValue: " Open"
-    input name: "closeSuffix", type: "text", title: "Suffix on Room names for scene name to close shades in room", defaultValue: " Close"
-    input name: "nameChanges", type: "text", title: "Name Translations for Open/Close Scene Names (changeroomname1=toscenename1,change2=to2) before suffixes", defaultValue: ""
     input name: "pruneMissing", type: "bool", title: "Remove Switches for missing Scenes/Shades", defaultValue: false
-    input name: "autoOff", type: "bool", title: "Set scene switches off automatically after 5s", defaultValue: true
+    input name: "autoOff", type: "bool", title: "Set switches off automatically after 10s", defaultValue: true
     input name: "debugMode", type: "bool", title: "Debug Mode", defaultValue: true
 }
 
 def refresh() {
-    updateRoom('00', 'All')
     execCommand('data')
 }
 
@@ -58,20 +52,11 @@ def installed() {
 
 def updated() {
     debug("Gateway updated", "updated()")
-    if(nameChanges) {
-        def changes = nameChanges.split(',')
-        changes?.each() {
-            def parts = it.split('=')
-            if(!state.nameChanges) state.nameChanges = [:]
-            state.nameChanges[parts[0]] = parts[1]
-        }
-    }
+    unschedule()
     initialize()
-    refresh()
 }
 
 def initialize() {
-    unschedule()
     debug('Telnet Presence', "initialize()")
     state.queue = []
     state.processing = null
@@ -96,7 +81,6 @@ def execQueue() {
         debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
         return
     }
-    if(state.skippedTurns >= 20) initialize()
     state.skippedTurns = 0
     def command = null
     if(state.queue) {
@@ -176,7 +160,6 @@ def processLine(line) {
       // name of room
       def room_id = line[3..4]
       def room_name = line.split('-')[-1].trim()
-      updateRoom(room_id, room_name)
       //debug("found room with ${room_id} and ${room_name}")
     } else if(line.startsWith("\$cm")) {
       // name of scene
@@ -192,14 +175,12 @@ def processLine(line) {
       def room_id = parts[1]
       //debug("found shade with ${shade_id} and ${shade_name}")
       updateShade(shade_id, shade_name, null)
-      updateRoomShade(shade_id, 100, room_id)
     } else if(line.startsWith("\$cp")) {
       // state of a shade
       def shade_id = line[3..4]
       def stateTxt = line[-4..-2]
       def state = (stateTxt.toInteger()/255.0)*100 as Integer
       updateShade(shade_id, null, state)
-      updateRoomShade(shade_id, state)
       //debug("found shade state with ${shade_id} and ${state}")
     }
 }
@@ -210,48 +191,7 @@ def updateScene(id, name) {
         namePrefix = namePrefix.trim()+" "
     }
     debug("processing scene ${id} with name ${name}")
-    if(!state.scenes) state.scenes = [:]
-    state.scenes[name] = id
     createChildDevice("scene", name, id)
-}
-
-def updateRoomState(room_id) {
-    if(!wantRooms || !state?.roomShades[room_id]) return
-    def open = true
-    state.roomShades[room_id].each() { shade_id, level ->
-        open = (open && level > 95)
-    }
-    def cd = getChildDevice(makeChildDeviceId('room', room_id))
-    if(cd) cd.sendEvent(name: 'switch', value: open ? 'off' : 'on')
-}
-
-def updateRoomShade(shade_id, level, room_id=null) {
-    if(wantRooms && shade_id && level != null) {
-        if(!room_id) {
-            state?.roomShades.each() { rid, sids ->
-                if(sids?.containsKey(shade_id) && '00' != rid) room_id = rid
-            }
-        }
-        if(room_id){
-            for(id in ['00', room_id]) {
-                if(!state.roomShades) state.roomShades = [:]
-                if(!state.roomShades[id]) state.roomShades[id] = [:]
-                state.roomShades[id][shade_id] = level
-                updateRoomState(id)
-            }
-        }
-    }
-}
-
-def updateRoom(id, name) {
-    def namePrefix = roomPrefix
-    if(namePrefix) {
-        namePrefix = namePrefix.trim()+" "
-    }
-    debug("processing room ${id} with name ${name}")
-    if(wantRooms) {
-        createChildDevice("room", "${name} Shades", id)
-    }
 }
 
 def updateShade(id, name, level=null) {
@@ -264,9 +204,9 @@ def updateShade(id, name, level=null) {
         def cd = createChildDevice("shade", name, id)
         if(level) {
             cd.sendEvent(name: 'level', value: level)
-            if(0 == level) { // open
+            if(0 == level) {
                 cd.sendEvent(name: 'switch', value: 'off')
-            } else { // closed
+            } else {
                 cd.sendEvent(name: 'switch', value: 'on')
             }
         }
@@ -311,17 +251,6 @@ private createChildDevice(deviceType, label, id) {
     return createdDevice
 }
 
-def getRoomScene(cd, on=true) {
-    def suffix = on ? closeSuffix : openSuffix
-    def label = state?.nameChanges?."${cd.label}" ?: cd.label
-    def clean = label ? label.replaceAll(/(?i) (bedroom|room|doors?|shades)/,'') : null
-    def scene_name = label ? "${clean}${suffix}" : null
-    if(scene_name && state.scenes?."${scene_name}") {
-        return state.scenes[scene_name]
-    }
-    return null
-}
-
 void componentRefresh(cd) {
     debug("received refresh request from ${cd.displayName}")
     refresh()
@@ -337,31 +266,18 @@ def componentOn(cd) {
     def idparts = cd.deviceNetworkId.split("-")
     def id = idparts[-1] as Integer
     def type = idparts[-2].toLowerCase()
-    if('room' == type) id = getRoomScene(cd, true)
-    if(id) {
-        'shade' == type ? setShadeLevel(id, 0) : runScene(id)
-        cd.sendEvent(name: 'switch', value: 'on')
-        if(autoOff && 'scene' == type) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
-        runIn(10, 'refresh')
-        runIn(20, 'refresh')
-    }
+    'shade' == type ? setShadeLevel(id, 100) : runScene(id)
+    cd.sendEvent(name: 'switch', value: 'on')
+    if(autoOff) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
 }
 
 def componentOff(cd) {
     debug("received off request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
-    def idparts = cd.deviceNetworkId.split("-")
-    def id = idparts[-1] as Integer
-    def type = idparts[-2].toLowerCase()
-    if('room' == type) id = getRoomScene(cd, false)
-    if(id) {
-        'shade' == type ? setShadeLevel(id, 100) : runScene(id)
-        cd.sendEvent(name: 'switch', value: 'off')
-        runIn(10, 'refresh')
-        runIn(20, 'refresh')
-    }
+    componentOn(cd)
+    cd.sendEvent(name: 'switch', value: 'off')
 }
 
-def componentSetLevel(cd, level) {
+def componentShadeLevel(cd, level) {
     debug("received shade level request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}")
     def idparts = cd.deviceNetworkId.split("-")
     def id = idparts[-1] as Integer
