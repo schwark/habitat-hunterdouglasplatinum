@@ -46,8 +46,10 @@ preferences {
     input name: "debugMode", type: "bool", title: "Debug Mode", defaultValue: true
 }
 
+def getAllRoomId() { '99' }
+
 def refresh() {
-    updateRoom('99', 'All')
+    updateRoom(getAllRoomId(), 'All')
     execCommand('data')
 }
 
@@ -70,11 +72,13 @@ def updated() {
     refresh()
 }
 
-def initialize() {
+def initialize(clean=true) {
     unschedule()
     debug('Telnet Presence', "initialize()")
-    state.queue = []
-    state.processing = null
+    if(clean) {
+        state.queue = []
+        state.processing = null
+    }
     if(settings.ip && settings.port) {
         telnetClose() 
         debug("connecting to ${settings.ip}:${settings.port}...")
@@ -147,10 +151,10 @@ def telnetStatus(String status){
     if (status == "receive error: Stream is closed")
     {
         logError("Connection was dropped. Reconnecting...", "telnetStatus()")
-        initialize()
+        if(!state.last_connection || (now() - state.last_connection) > 10*1000) initialize(false)
         if(state.processing) {
             debug("Retrying command ${state.processing['cmd']} after reconnect...")
-            execCommand(state.processing["cmd"], state.processing["params"], state.processing["callback"])
+            sendCommand(state.processing["cmd"], state.processing["params"], state.processing["callback"])
         }
     } 
 }
@@ -171,6 +175,7 @@ def processLine(line) {
     }
 
     if(line == "${prefix}HunterDouglas Shade Controller") {
+        state.last_connection = now()
         log.info("connected as connection # ${prefix}")
         return
     }
@@ -234,14 +239,15 @@ def updateRoomState(room_id) {
 }
 
 def updateRoomShade(shade_id, level, room_id=null) {
+    def allroom = getAllRoomId()
     if(wantRooms && shade_id && level != null) {
         if(!room_id) {
             state?.roomShades.each() { rid, sids ->
-                if(sids?.containsKey(shade_id) && '00' != rid) room_id = rid
+                if(sids?.containsKey(shade_id) && allroom != rid) room_id = rid
             }
         }
         if(room_id){
-            for(id in ['00', room_id]) {
+            for(id in [allroom, room_id]) {
                 if(!state.roomShades) state.roomShades = [:]
                 if(!state.roomShades[id]) state.roomShades[id] = [:]
                 state.roomShades[id][shade_id] = level
