@@ -80,7 +80,8 @@ def initialize(clean=true) {
         state.processing = null
     }
     if(settings.ip && settings.port) {
-        telnetClose() 
+        telnetClose()
+        pauseExecution(1000) 
         debug("connecting to ${settings.ip}:${settings.port}...")
         telnetConnect([termChars:[13]], ip, port as Integer, null, null)
         schedule('*/10 * * ? * *', execQueue)
