@@ -80,10 +80,12 @@ def initialize(clean=true) {
         state.processing = null
     }
     if(settings.ip && settings.port) {
-        telnetClose()
-        pauseExecution(1000) 
-        debug("connecting to ${settings.ip}:${settings.port}...")
-        telnetConnect([termChars:[13]], ip, port as Integer, null, null)
+        if(!state.last_connection || (now() - state.last_connection) > 10*1000) {
+            telnetClose()
+            pauseExecution(1000) 
+            debug("connecting to ${settings.ip}:${settings.port}...")
+            telnetConnect([termChars:[13]], ip, port as Integer, null, null)
+        }  
         schedule('*/10 * * ? * *', execQueue)
     } else {
         logError("ip or port missing", "initialize()")
@@ -152,7 +154,7 @@ def telnetStatus(String status){
     if (status == "receive error: Stream is closed")
     {
         logError("Connection was dropped. Reconnecting...", "telnetStatus()")
-        if(!state.last_connection || (now() - state.last_connection) > 10*1000) initialize(false)
+        initialize(false)
         if(state.processing) {
             debug("Retrying command ${state.processing['cmd']} after reconnect...")
             sendCommand(state.processing["cmd"], state.processing["params"], state.processing["callback"])
