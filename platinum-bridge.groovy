@@ -122,7 +122,10 @@ private sendCommand(command, params=null, callback=null) {
 
 def closeCommand() {
     def cmd = state.processing['cmd']
-    if('ping' != cmd) debug("closing command ${cmd} with callback ${state.processing['callback']}", "closeCommand()")
+    if('ping' != cmd) {
+        debug("closing command ${cmd} with callback ${state.processing['callback']}", "closeCommand()")
+        log.info("Command ${cmd} completed")
+    }
     if(state.processing && state.processing['callback']) "${state.processing['callback']}"()
     state.processing = null
     if('move' == cmd) sendCommand('release')
@@ -290,12 +293,13 @@ private createChildDevice(deviceType, label, id) {
     def type = deviceType.capitalize()
     def deviceId = makeChildDeviceId(deviceType, id)
     def createdDevice = getChildDevice(deviceId)
+    def name = "Hunter Douglas ${type}"
 
     if(!createdDevice && label) {
         try {
             def component = 'shade' == deviceType ? 'Generic Component Dimmer' : 'Generic Component Switch'
             // create the child device
-            addChildDevice("hubitat", component, deviceId, [label : "${label}", isComponent: false, name: "${label}"])
+            addChildDevice("hubitat", component, deviceId, [label : "${label}", isComponent: false, name: "${name}"])
             createdDevice = getChildDevice(deviceId)
             def created = createdDevice ? "created" : "failed creation"
             log.info("Child device type: ${type} id: ${deviceId} label: ${label} ${created}")
@@ -307,6 +311,10 @@ private createChildDevice(deviceType, label, id) {
         if(label && label != createdDevice.getLabel()) {
             createdDevice.setLabel(label)
             createdDevice.sendEvent(name:'label', value: label, isStateChange: true)
+        }
+        if(name && name != createdDevice.getName()) {
+            createdDevice.setName(name)
+            createdDevice.sendEvent(name:'name', value: name, isStateChange: true)
         }
     }
     if('shade' == deviceType) createdDevice.sendEvent(name: 'switch', value: 'off')
