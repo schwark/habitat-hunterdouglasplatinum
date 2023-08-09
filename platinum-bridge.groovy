@@ -321,6 +321,10 @@ private createChildDevice(deviceType, label, id) {
             createdDevice.setName(name)
             createdDevice.sendEvent(name:'name', value: name, isStateChange: true)
         }
+        if(!debugMode) {
+            createdDevice.updateSetting('logEnable', false)
+            createdDevice.updateSetting('txtEnable', false)
+        }
     }
     if('shade' == deviceType) createdDevice.sendEvent(name: 'switch', value: 'off')
     return createdDevice
