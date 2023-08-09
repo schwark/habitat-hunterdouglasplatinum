@@ -79,7 +79,7 @@ def initialize() {
         telnetClose() 
         debug("connecting to ${settings.ip}:${settings.port}...")
         telnetConnect([termChars:[13]], ip, port as Integer, null, null)
-        schedule('*/5 * * ? * *', execQueue)
+        schedule('*/10 * * ? * *', execQueue)
     } else {
         logError("ip or port missing", "initialize()")
     }
@@ -361,12 +361,10 @@ def componentOn(cd) {
     def id = idparts[-1] as Integer
     def type = idparts[-2].toLowerCase()
     if('room' == type) id = getRoomScene(cd, true)
-    if(id) {
-        'shade' == type ? setShadeLevel(id, 0) : runScene(id)
-        cd.sendEvent(name: 'switch', value: 'on')
-        if(autoOff && 'scene' == type) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
-        //runIn(20, 'refresh')
-    }
+    'shade' == type ? setShadeLevel(id, 0) : runScene(id)
+    cd.sendEvent(name: 'switch', value: 'on')
+    if(autoOff && 'scene' == type) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
+    //runIn(20, 'refresh')
 }
 
 def componentOff(cd) {
@@ -375,11 +373,9 @@ def componentOff(cd) {
     def id = idparts[-1] as Integer
     def type = idparts[-2].toLowerCase()
     if('room' == type) id = getRoomScene(cd, false)
-    if(id) {
-        'shade' == type ? setShadeLevel(id, 100) : runScene(id)
-        cd.sendEvent(name: 'switch', value: 'off')
-        //runIn(20, 'refresh')
-    }
+    'shade' == type ? setShadeLevel(id, 100) : runScene(id)
+    cd.sendEvent(name: 'switch', value: 'off')
+    //runIn(20, 'refresh')
 }
 
 def componentSetLevel(cd, level) {
