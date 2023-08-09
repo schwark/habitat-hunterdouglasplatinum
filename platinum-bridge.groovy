@@ -73,22 +73,24 @@ def updated() {
 }
 
 def initialize(clean=true) {
-    unschedule()
-    debug('Telnet Presence', "initialize()")
-    if(clean) {
-        state.queue = []
-        state.processing = null
-    }
-    if(settings.ip && settings.port) {
-        if(!state.last_connection || (now() - state.last_connection) > 10*1000) {
+    def sinceLast = (now() - (state?.lastConnection ?: 0))/1000
+    if(sinceLast > 10) {
+        unschedule()
+        debug('Telnet Presence', "initialize()")
+        if(clean) {
+            state.queue = []
+            state.processing = null
+        }
+        if(settings.ip && settings.port) {
+            debug("last connection ${state.lastConnection} and sinceLast is ${sinceLast}")
             telnetClose()
             pauseExecution(1000) 
             debug("connecting to ${settings.ip}:${settings.port}...")
             telnetConnect([termChars:[13]], ip, port as Integer, null, null)
-        }  
-        schedule('*/10 * * ? * *', execQueue)
-    } else {
-        logError("ip or port missing", "initialize()")
+            schedule('*/10 * * ? * *', execQueue)
+        } else {
+            logError("ip or port missing", "initialize()")
+        }
     }
 }
 
@@ -178,7 +180,7 @@ def processLine(line) {
     }
 
     if(line == "${prefix}HunterDouglas Shade Controller") {
-        state.last_connection = now()
+        state.lastConnection = now()
         log.info("connected as connection # ${prefix}")
         return
     }
