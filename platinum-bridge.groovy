@@ -72,26 +72,26 @@ def updated() {
     refresh()
 }
 
-def initialize(clean=true) {
-    def sinceLast = (now() - (state?.lastConnection ?: 0))/1000
+def reconnect() {
+    def sinceLast = (now() - (state.lastConnection ?: 0))/1000
     if(sinceLast > 10) {
-        unschedule()
         debug('Telnet Presence', "initialize()")
-        if(clean) {
-            state.queue = []
-            state.processing = null
-        }
         if(settings.ip && settings.port) {
             debug("last connection ${state.lastConnection} and sinceLast is ${sinceLast}")
             telnetClose()
             pauseExecution(1000) 
             debug("connecting to ${settings.ip}:${settings.port}...")
             telnetConnect([termChars:[13]], ip, port as Integer, null, null)
-            schedule('*/10 * * ? * *', execQueue)
         } else {
             logError("ip or port missing", "initialize()")
         }
     }
+}
+
+def initialize() {
+    unschedule()
+    reconnect()
+    schedule('*/10 * * ? * *', execQueue)
 }
 
 def execCommand(command, params=null, callback=null) {
@@ -105,7 +105,7 @@ def execQueue() {
         debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
         return
     }
-    if(state.skippedTurns >= 20) initialize()
+    if(state.skippedTurns >= 20) reconnect()
     state.skippedTurns = 0
     def command = null
     if(state.queue) {
@@ -153,14 +153,10 @@ private parse(String msg)
 
 def telnetStatus(String status){
     debug("telnet error: ${status}", "telnetStatus()")
-    if (status == "receive error: Stream is closed")
+    if (status.contains("closed"))
     {
         logError("Connection was dropped. Reconnecting...", "telnetStatus()")
-        initialize(false)
-        if(state.processing) {
-            debug("Retrying command ${state.processing['cmd']} after reconnect...")
-            sendCommand(state.processing["cmd"], state.processing["params"], state.processing["callback"])
-        }
+        reconnect()
     } 
 }
 
