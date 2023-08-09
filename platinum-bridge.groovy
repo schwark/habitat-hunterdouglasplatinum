@@ -91,7 +91,7 @@ def reconnect() {
 def initialize() {
     unschedule()
     reconnect()
-    schedule('*/10 * * ? * *', execQueue)
+    schedule('*/5 * * ? * *', execQueue)
 }
 
 def execCommand(command, params=null, callback=null) {
