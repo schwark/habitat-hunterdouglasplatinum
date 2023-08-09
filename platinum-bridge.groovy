@@ -47,7 +47,7 @@ preferences {
 }
 
 def refresh() {
-    updateRoom('00', 'All')
+    updateRoom('99', 'All')
     execCommand('data')
 }
 
@@ -168,6 +168,11 @@ def processLine(line) {
     }
     else if(!line.startsWith(prefix)) {
       return
+    }
+
+    if(line == "${prefix}HunterDouglas Shade Controller") {
+        log.info("connected as connection # ${prefix}")
+        return
     }
     
     line = line.drop(2)
