@@ -357,6 +357,15 @@ void componentRefresh(cd) {
     refresh()
 }
 
+def uninstalled() {
+    unschedule()
+    def children = getAllChildDevices()
+    log.info("uninstalled: children = ${children}")
+    children.each {
+        deleteChildDevice(it.deviceNetworkId)
+    }
+}
+
 def turnOff(map) {
     def cd = getChildDevice(map['device'])
     cd.sendEvent(name: 'switch', value: 'off')
