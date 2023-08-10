@@ -54,8 +54,7 @@ def refresh() {
 }
 
 def installed() {
-    debug("Gateway installed", "updated()")
-    updated()
+    debug("Gateway installed", "installed()")
 }
 
 def updated() {
@@ -68,6 +67,8 @@ def updated() {
             state.nameChanges[parts[0]] = parts[1]
         }
     }
+    unschedule()
+    schedule('*/5 * * ? * *', execQueue)
     initialize()
     refresh()
 }
@@ -89,9 +90,7 @@ def reconnect() {
 }
 
 def initialize() {
-    unschedule()
     reconnect()
-    schedule('*/5 * * ? * *', execQueue)
 }
 
 def execCommand(command, params=null, callback=null) {
