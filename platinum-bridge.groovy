@@ -106,7 +106,7 @@ def execQueue() {
         debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
         return
     }
-    if(state.skippedTurns >= 20) reconnect()
+    if(state.skippedTurns >= skipLimit) reconnect()
     state.skippedTurns = 0
     def command = null
     if(state.queue) {
