@@ -100,7 +100,7 @@ def execCommand(command, params=null, callback=null) {
 }
 
 def execQueue() {
-    def skipLimit = 'ping' == state.processing['cmd'] ? 3 : 20
+    def skipLimit = 'ping' == state.processing?.cmd ? 3 : 20
     if(state.processing && state.skippedTurns < skipLimit) {
         state.skippedTurns = (state.skippedTurns ? state.skippedTurns : 0) + 1
         debug("still processing ${state.processing['cmd']} - so waiting for next turn #${state.skippedTurns}...")
