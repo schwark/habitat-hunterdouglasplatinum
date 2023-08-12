@@ -1,5 +1,8 @@
 # Hunter Douglas Platinum Gateway Integration with Hubitat Hub
 
+# How to install
+The easiest way to install and keep up to date is to use [Hubitat Package Manager](https://hubitatpackagemanager.hubitatcommunity.com/installing.html). Search for Hunter Douglas to install - otherwise follow manual process below
+
 This is an integration for Hubitat hubs to control shades that use the Hunter Douglas Platinum Gateway hub. This is NOT for PowerView shades.
 
 To use, go to your Hubitat hub, Go to Developer tools / Drivers Code / Add New Driver and paste and save this file
