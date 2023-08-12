@@ -15,7 +15,7 @@
  *
  */
 
- def version() {"1.0.0"}
+def version() {"1.0.0"}
 
 import hubitat.helper.InterfaceUtils
 
