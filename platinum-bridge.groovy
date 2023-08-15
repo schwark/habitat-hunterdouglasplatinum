@@ -15,12 +15,12 @@
  *
  */
 
-def version() {"1.0.0"}
+def version() {"1.0.1"}
 
 import hubitat.helper.InterfaceUtils
 
 metadata {
-    definition (name: "Hunter Douglas Platinum Gateway", namespace: "schwark", author: "Schwark Satyavolu") {
+    definition (name: "Hunter Douglas Platinum Gateway", namespace: "schwark", author: "Schwark Satyavolu", singleThreaded: true) {
         capability "Initialize"
         capability "Refresh"
         capability "Telnet"
