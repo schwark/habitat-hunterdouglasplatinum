@@ -15,7 +15,7 @@
  *
  */
 
-def version() {"1.0.1"}
+def version() {"1.0.2"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -367,6 +367,7 @@ def uninstalled() {
 }
 
 def turnOff(map) {
+    debug("turning off ${map['device']}...")
     def cd = getChildDevice(map['device'])
     cd.sendEvent(name: 'switch', value: 'off')
 }
@@ -379,7 +380,10 @@ def componentOn(cd) {
     if('room' == type) id = getRoomScene(cd, true)
     'shade' == type ? setShadeLevel(id, 0) : runScene(id)
     cd.sendEvent(name: 'switch', value: 'on')
-    if(autoOff && 'scene' == type) runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId]])
+    debug("autoOff is ${autoOff} and type is ${type}")
+    if(autoOff && 'scene' == type) {
+        runIn(5, 'turnOff', [data: [device: cd.deviceNetworkId], overwrite: false])
+    }
     //runIn(20, 'refresh')
 }
 
