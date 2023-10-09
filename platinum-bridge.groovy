@@ -90,6 +90,7 @@ def reconnect() {
 }
 
 def initialize() {
+    state.queue = []
     reconnect()
 }
 
